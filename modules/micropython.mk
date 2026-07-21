@@ -50,6 +50,9 @@ CXXFLAGS_USERMOD += \
         -fmessage-length=0 \
         $(filter-out -std=gnu11,$(CFLAGS))
 
+# Add native Edge Impulse YOLO-Pro EON module.
+include $(OMV_MOD_DIR)/ei_yolo/micropython.mk
+
 # Add CubeAI module if enabled.
 ifeq ($(MICROPY_PY_CUBEAI), 1)
 SRC_USERMOD += $(OMV_MOD_DIR)/../../stm32cubeai/py_st_nn.c

@@ -1,0 +1,49 @@
+name: Build YOLO-Pro OpenMV Nicla Firmware
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-nicla:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: false
+
+      - name: Update submodules
+        run: source tools/ci.sh && ci_update_submodules
+
+      - name: Read SDK version
+        id: sdk-ver
+        run: echo "version=$(cat SDK_VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache SDK
+        uses: actions/cache@v6.1.0
+        id: sdk-cache
+        with:
+          path: ~/openmv-sdk-${{ steps.sdk-ver.outputs.version }}
+          key: openmv-sdk-${{ steps.sdk-ver.outputs.version }}-linux-x86_64
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-arm
+
+      - name: Install OpenMV SDK
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
+        run: source tools/ci.sh && ci_install_sdk
+
+      - name: Build Arduino Nicla Vision firmware
+        run: source tools/ci.sh && ci_build_target ARDUINO_NICLA_VISION false 0 true
+
+      - name: Show produced firmware files
+        run: find ARDUINO_NICLA_VISION -maxdepth 3 -type f -print
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: YOLO_PRO_EON_OPENMV_NICLA
+          path: ARDUINO_NICLA_VISION
+          if-no-files-found: error

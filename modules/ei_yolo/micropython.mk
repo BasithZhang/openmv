@@ -1,0 +1,26 @@
+# Edge Impulse YOLO-Pro EON native module for OpenMV.
+# Included from openmv/modules/micropython.mk by apply_to_openmv_repo.py.
+
+EI_YOLO_DIR := $(OMV_MOD_DIR)/ei_yolo
+
+EI_YOLO_C_SOURCES := $(shell find $(EI_YOLO_DIR) -type f -name '*.c')
+EI_YOLO_CXX_SOURCES := $(shell find $(EI_YOLO_DIR) -type f -name '*.cpp')
+
+SRC_USERMOD += $(EI_YOLO_C_SOURCES)
+SRC_USERMOD_CXX += $(EI_YOLO_CXX_SOURCES)
+
+CFLAGS_USERMOD += \
+    -I$(EI_YOLO_DIR) \
+    -DEI_PORTING_CLIB=1 \
+    -DEIDSP_SIGNAL_C_FN_POINTER=1 \
+    -DEIDSP_USE_CMSIS_DSP=0 \
+    -DEI_CLASSIFIER_USE_FULL_TFLITE=0 \
+    -DSILENCE_EI_CLASSFIER_OBJECT_DETECTION_COUNT_WARNING
+
+CXXFLAGS_USERMOD += \
+    -I$(EI_YOLO_DIR) \
+    -DEI_PORTING_CLIB=1 \
+    -DEIDSP_SIGNAL_C_FN_POINTER=1 \
+    -DEIDSP_USE_CMSIS_DSP=0 \
+    -DEI_CLASSIFIER_USE_FULL_TFLITE=0 \
+    -DSILENCE_EI_CLASSFIER_OBJECT_DETECTION_COUNT_WARNING
