@@ -30,6 +30,24 @@ extern "C" {
 #include "edge-impulse-sdk/classifier/ei_run_classifier.h"
 #include "model-parameters/model_metadata.h"
 
+
+// OpenMV links native C++ modules without libstdc++. These are the
+// small runtime functions required by the Edge Impulse classifier.
+void *operator new[](size_t size) {
+    return ei_malloc(size);
+}
+
+void operator delete[](void *ptr) noexcept {
+    ei_free(ptr);
+}
+
+namespace std {
+__attribute__((weak, noreturn)) void __throw_bad_function_call() {
+    while (true) {
+    }
+}
+} // namespace std
+
 namespace {
 
 static image_t *g_image = nullptr;
@@ -280,7 +298,7 @@ extern "C" __attribute__((weak)) int _getpid(void) {
     return 1;
 }
 
-extern "C" extern "C" const mp_obj_module_t ei_yolo_user_cmodule = {
+extern "C" const mp_obj_module_t ei_yolo_user_cmodule = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&ei_yolo_module_globals,
 };
