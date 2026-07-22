@@ -36,7 +36,30 @@ jobs:
         run: source tools/ci.sh && ci_install_sdk
 
       - name: Build Arduino Nicla Vision firmware
-        run: source tools/ci.sh && ci_build_target ARDUINO_NICLA_VISION false 0 true
+        run: |
+          source tools/ci.sh
+          make -j$(nproc) -C lib/micropython/mpy-cross
+          make -j$(nproc) TARGET=ARDUINO_NICLA_VISION \
+            PROFILE_ENABLE=0 PROFILE_HASH=64 \
+            OMV_LEPTON_SDK_ENABLE=0 \
+            MICROPY_PY_FIR=0 \
+            MICROPY_PY_ULAB=0 \
+            MICROPY_PY_IMU=0 \
+            MICROPY_PY_LWIP=0 \
+            MICROPY_PY_SSL=0 \
+            MICROPY_PY_SSL_ECDSA_SIGN_ALT=0 \
+            MICROPY_SSL_MBEDTLS=0 \
+            MICROPY_PY_NETWORK_CYW43=0 \
+            MICROPY_PY_BLUETOOTH=0 \
+            MICROPY_BLUETOOTH_NIMBLE=0 \
+            MICROPY_PY_AUDIO=0 \
+            MICROPY_PY_DISPLAY=0 \
+            MICROPY_PY_TV=0 \
+            MICROPY_PY_ML=0 \
+            MICROPY_PY_ML_TFLM=0 \
+            MICROPY_PY_OPENAMP=0 \
+            MICROPY_PY_OPENAMP_REMOTEPROC=0
+          mv build/ARDUINO_NICLA_VISION/bin ARDUINO_NICLA_VISION
 
       - name: Show produced firmware files
         run: find ARDUINO_NICLA_VISION -maxdepth 3 -type f -print

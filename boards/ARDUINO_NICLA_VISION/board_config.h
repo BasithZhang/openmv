@@ -47,10 +47,10 @@
 #define OMV_GC2145_ROTATE                     (1)
 
 // FIR drivers configuration.
-#define OMV_FIR_MLX90621_ENABLE               (1)
-#define OMV_FIR_MLX90640_ENABLE               (1)
-#define OMV_FIR_MLX90641_ENABLE               (1)
-#define OMV_FIR_AMG8833_ENABLE                (1)
+#define OMV_FIR_MLX90621_ENABLE               (0)
+#define OMV_FIR_MLX90640_ENABLE               (0)
+#define OMV_FIR_MLX90641_ENABLE               (0)
+#define OMV_FIR_AMG8833_ENABLE                (0)
 
 
 // USB IRQn.

@@ -20,6 +20,7 @@ extern "C" {
 #include "py/obj.h"
 #include "py/binary.h"
 #include "py_image.h"
+#include "umalloc.h"
 }
 
 #include <stdint.h>
@@ -31,6 +32,24 @@ extern "C" {
 #include "edge-impulse-sdk/classifier/ei_run_classifier.h"
 #include "model-parameters/model_metadata.h"
 
+
+
+// Use Nicla's unified SRAM allocator for Edge Impulse. The regular libc
+// heap is not available in this OpenMV memory layout.
+void *ei_malloc(size_t size) {
+    return uma_malloc(size, UMA_MAYBE);
+}
+
+void *ei_calloc(size_t nitems, size_t size) {
+    if (nitems != 0 && size > ((size_t)-1) / nitems) {
+        return nullptr;
+    }
+    return uma_calloc(nitems * size, UMA_MAYBE);
+}
+
+void ei_free(void *ptr) {
+    uma_free(ptr);
+}
 
 // OpenMV links native C++ modules without libstdc++. Supply the
 // subset required by the EON runtime and YOLO-Pro post-processing.
