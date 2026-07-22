@@ -130,7 +130,7 @@
 #define OMV_CM4_BOOT_MEMORY                   SRAM4     // Use to boot CM4 for low-power mode.
 #define OMV_CM4_BOOT_SIZE                     1K
 #define OMV_GC_BLOCK0_MEMORY                  DTCM      // Main GC block 0.
-#define OMV_GC_BLOCK0_SIZE                    (29K)
+#define OMV_GC_BLOCK0_SIZE                    (12K)
 #define OMV_GC_BLOCK1_MEMORY                  SRAM4     // Extra GC block 1.
 #define OMV_GC_BLOCK1_SIZE                    (63K)
 #define OMV_GC_BLOCK2_MEMORY                  SRAM1     // Extra GC block 2.

@@ -32,18 +32,49 @@ extern "C" {
 #include "model-parameters/model_metadata.h"
 
 
-// OpenMV links native C++ modules without libstdc++. These are the
-// small runtime functions required by the Edge Impulse classifier.
+// OpenMV links native C++ modules without libstdc++. Supply the
+// subset required by the EON runtime and YOLO-Pro post-processing.
+void *operator new(size_t size) {
+    return ei_malloc(size);
+}
+
 void *operator new[](size_t size) {
     return ei_malloc(size);
+}
+
+void operator delete(void *ptr) noexcept {
+    ei_free(ptr);
 }
 
 void operator delete[](void *ptr) noexcept {
     ei_free(ptr);
 }
 
+void operator delete(void *ptr, size_t) noexcept {
+    ei_free(ptr);
+}
+
+void operator delete[](void *ptr, size_t) noexcept {
+    ei_free(ptr);
+}
+
 namespace std {
 __attribute__((weak, noreturn)) void __throw_bad_function_call() {
+    while (true) {
+    }
+}
+
+__attribute__((weak, noreturn)) void __throw_bad_alloc() {
+    while (true) {
+    }
+}
+
+__attribute__((weak, noreturn)) void __throw_bad_array_new_length() {
+    while (true) {
+    }
+}
+
+__attribute__((weak, noreturn)) void __throw_length_error(const char *) {
     while (true) {
     }
 }
@@ -247,9 +278,17 @@ static mp_obj_t py_ei_yolo_detect(size_t n_args, const mp_obj_t *pos_args, mp_ma
     signal.total_length = EI_CLASSIFIER_RAW_SAMPLE_COUNT;
     signal.get_data = &ei_yolo_get_data;
 
+    // Use the memory-efficient fast path for this quantized image model.
     ei_impulse_result_t result = { 0 };
-    const EI_IMPULSE_ERROR error = process_impulse(
-        get_impulse_handle(), &signal, &result, args[ARG_debug].u_bool);
+    ei_feature_t raw_outputs[1] = { 0 };
+    result._raw_outputs = raw_outputs;
+
+    EI_IMPULSE_ERROR error = run_classifier_image_quantized(
+        &impulse_1042434_1, &signal, &result, args[ARG_debug].u_bool);
+
+    if (error == EI_IMPULSE_OK) {
+        error = run_postprocessing(get_impulse_handle(), &result);
+    }
 
     // Stop exposing the image through global callback state immediately after inference.
     g_image = nullptr;
