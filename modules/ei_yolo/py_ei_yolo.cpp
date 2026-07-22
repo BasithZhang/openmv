@@ -107,21 +107,6 @@ static int32_t g_crop_y = 0;
 static int32_t g_crop_w = 0;
 static int32_t g_crop_h = 0;
 
-
-// OpenMV does not run C++ global constructors. Construct Edge Impulse's
-// model handle lazily, after the firmware allocator is ready.
-alignas(ei_impulse_handle_t)
-static uint8_t g_impulse_handle_storage[sizeof(ei_impulse_handle_t)];
-static ei_impulse_handle_t *g_impulse_handle = nullptr;
-
-static ei_impulse_handle_t *get_impulse_handle(void) {
-    if (g_impulse_handle == nullptr) {
-        g_impulse_handle = new (g_impulse_handle_storage)
-            ei_impulse_handle_t(&impulse_1042434_1);
-    }
-    return g_impulse_handle;
-}
-
 static inline uint8_t clamp_u8(int32_t value) {
     if (value < 0) return 0;
     if (value > 255) return 255;
@@ -282,10 +267,8 @@ static mp_obj_t py_ei_yolo_detect(size_t n_args, const mp_obj_t *pos_args, mp_ma
         min_confidence = mp_obj_get_float(args[ARG_min_confidence].u_obj);
     }
 
-    // The model's native postprocessor already removes boxes below 0.50.
-    // A higher Python threshold is allowed; a lower one cannot restore removed boxes.
-    if (min_confidence < EI_CLASSIFIER_OBJECT_DETECTION_THRESHOLD) {
-        min_confidence = EI_CLASSIFIER_OBJECT_DETECTION_THRESHOLD;
+    if (min_confidence < 0.0f) {
+        min_confidence = 0.0f;
     }
     if (min_confidence > 1.0f) {
         min_confidence = 1.0f;
@@ -306,7 +289,22 @@ static mp_obj_t py_ei_yolo_detect(size_t n_args, const mp_obj_t *pos_args, mp_ma
         &impulse_1042434_1, &signal, &result, args[ARG_debug].u_bool);
 
     if (error == EI_IMPULSE_OK) {
-        error = run_postprocessing(get_impulse_handle(), &result);
+        // Keep all heap-owning Edge Impulse state local to this inference.
+        // OpenMV recreates UMA on every soft reset, so global heap pointers
+        // must not survive between script runs.
+        ei_impulse_handle_t impulse_handle(&impulse_1042434_1);
+
+        // Make the Python threshold control YOLO-Pro post-processing.
+        float generated_threshold =
+            ei_fill_result_object_detection_i8_config_1042434_7.threshold;
+
+        ei_fill_result_object_detection_i8_config_1042434_7.threshold =
+            min_confidence;
+
+        error = run_postprocessing(&impulse_handle, &result);
+
+        ei_fill_result_object_detection_i8_config_1042434_7.threshold =
+            generated_threshold;
     }
 
     // Stop exposing the image through global callback state immediately after inference.

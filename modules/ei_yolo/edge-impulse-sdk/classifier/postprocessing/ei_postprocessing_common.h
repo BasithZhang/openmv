@@ -2019,9 +2019,10 @@ __attribute__((unused)) static EI_IMPULSE_ERROR fill_result_struct_yolo_pro_comm
     size_t col_size = 4 + impulse->label_count;
     size_t row_count = output_features_count / col_size;
 
-    static std::vector<ei_impulse_result_bounding_box_t> results;
-    static std::vector<ei_impulse_result_bounding_box_t> class_results;
-    results.clear();
+    // Local vectors are destroyed before this inference returns.
+    // This prevents stale UMA pointers after an OpenMV soft reset.
+    std::vector<ei_impulse_result_bounding_box_t> results;
+    std::vector<ei_impulse_result_bounding_box_t> class_results;
 
     // (xmin, ymin, xmax, ymax, cls...)
     for (size_t cls_idx = 0; cls_idx < (size_t)impulse->label_count; cls_idx++)  {
@@ -2103,6 +2104,23 @@ __attribute__((unused)) static EI_IMPULSE_ERROR fill_result_struct_yolo_pro_comm
     }
 
     prepare_nms_results_common(object_detection_count, result, &results);
+
+    // Copy the final detections into pointer-free static storage. Only the
+    // top ten detections are required by this generated model and locker.
+    static ei_impulse_result_bounding_box_t
+        stable_results[EI_CLASSIFIER_OBJECT_DETECTION_COUNT];
+
+    const size_t stable_count = std::min(
+        (size_t) result->bounding_boxes_count,
+        (size_t) EI_CLASSIFIER_OBJECT_DETECTION_COUNT);
+
+    for (size_t ix = 0; ix < stable_count; ix++) {
+        stable_results[ix] = results[ix];
+    }
+
+    result->bounding_boxes = stable_results;
+    result->bounding_boxes_count = stable_count;
+
     return EI_IMPULSE_OK;
 }
 #endif // #if EI_HAS_YOLO_PRO
