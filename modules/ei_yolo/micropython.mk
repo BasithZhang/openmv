@@ -12,7 +12,6 @@ SRC_USERMOD_CXX += $(EI_YOLO_CXX_SOURCES)
 CFLAGS_USERMOD += \
     -I$(EI_YOLO_DIR) \
     -DEI_PORTING_CLIB=1 \
-    -DEIDSP_SIGNAL_C_FN_POINTER=1 \
     -DEIDSP_USE_CMSIS_DSP=0 \
     -DEI_CLASSIFIER_USE_FULL_TFLITE=0 \
     -DSILENCE_EI_CLASSFIER_OBJECT_DETECTION_COUNT_WARNING
@@ -20,7 +19,11 @@ CFLAGS_USERMOD += \
 CXXFLAGS_USERMOD += \
     -I$(EI_YOLO_DIR) \
     -DEI_PORTING_CLIB=1 \
-    -DEIDSP_SIGNAL_C_FN_POINTER=1 \
     -DEIDSP_USE_CMSIS_DSP=0 \
     -DEI_CLASSIFIER_USE_FULL_TFLITE=0 \
     -DSILENCE_EI_CLASSFIER_OBJECT_DETECTION_COUNT_WARNING
+
+# Edge Impulse SDK has warnings that OpenMV's global -Werror would reject.
+# Relax Werror only for the embedded EI/YOLO sources.
+$(BUILD)/modules/ei_yolo/%.o: override CFLAGS += -Wno-error
+$(BUILD)/modules/ei_yolo/%.o: override CXXFLAGS += -Wno-error

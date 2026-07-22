@@ -50,8 +50,10 @@ CXXFLAGS_USERMOD += \
         -fmessage-length=0 \
         $(filter-out -std=gnu11,$(CFLAGS))
 
-# Add native Edge Impulse YOLO-Pro EON module.
+# Add native Edge Impulse YOLO-Pro EON module only for Nicla Vision.
+ifeq ($(TARGET), ARDUINO_NICLA_VISION)
 include $(OMV_MOD_DIR)/ei_yolo/micropython.mk
+endif
 
 # Add CubeAI module if enabled.
 ifeq ($(MICROPY_PY_CUBEAI), 1)
