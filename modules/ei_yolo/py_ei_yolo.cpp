@@ -25,6 +25,7 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 #include <math.h>
+#include <new>
 #include <string.h>
 
 #include "edge-impulse-sdk/classifier/ei_run_classifier.h"
@@ -55,6 +56,21 @@ static int32_t g_crop_x = 0;
 static int32_t g_crop_y = 0;
 static int32_t g_crop_w = 0;
 static int32_t g_crop_h = 0;
+
+
+// OpenMV does not run C++ global constructors. Construct Edge Impulse's
+// model handle lazily, after the firmware allocator is ready.
+alignas(ei_impulse_handle_t)
+static uint8_t g_impulse_handle_storage[sizeof(ei_impulse_handle_t)];
+static ei_impulse_handle_t *g_impulse_handle = nullptr;
+
+static ei_impulse_handle_t *get_impulse_handle(void) {
+    if (g_impulse_handle == nullptr) {
+        g_impulse_handle = new (g_impulse_handle_storage)
+            ei_impulse_handle_t(&impulse_1042434_1);
+    }
+    return g_impulse_handle;
+}
 
 static inline uint8_t clamp_u8(int32_t value) {
     if (value < 0) return 0;
@@ -232,7 +248,8 @@ static mp_obj_t py_ei_yolo_detect(size_t n_args, const mp_obj_t *pos_args, mp_ma
     signal.get_data = &ei_yolo_get_data;
 
     ei_impulse_result_t result = { 0 };
-    const EI_IMPULSE_ERROR error = run_classifier(&signal, &result, args[ARG_debug].u_bool);
+    const EI_IMPULSE_ERROR error = process_impulse(
+        get_impulse_handle(), &signal, &result, args[ARG_debug].u_bool);
 
     // Stop exposing the image through global callback state immediately after inference.
     g_image = nullptr;
