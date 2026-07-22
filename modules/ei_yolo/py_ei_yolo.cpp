@@ -280,7 +280,7 @@ extern "C" __attribute__((weak)) int _getpid(void) {
     return 1;
 }
 
-extern "C" const mp_obj_module_t ei_yolo_user_cmodule = {
+extern "C" extern "C" const mp_obj_module_t ei_yolo_user_cmodule = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&ei_yolo_module_globals,
 };
