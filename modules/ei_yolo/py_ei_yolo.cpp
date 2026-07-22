@@ -267,7 +267,20 @@ static const mp_rom_map_elem_t ei_yolo_module_globals_table[] = {
 };
 static MP_DEFINE_CONST_DICT(ei_yolo_module_globals, ei_yolo_module_globals_table);
 
-const mp_obj_module_t ei_yolo_user_cmodule = {
+
+// TensorFlow Lite may call abort(), which Newlib connects to these process
+// functions. Nicla Vision has no operating-system processes, so use safe stubs.
+extern "C" __attribute__((weak)) int _kill(int pid, int signal) {
+    (void)pid;
+    (void)signal;
+    return -1;
+}
+
+extern "C" __attribute__((weak)) int _getpid(void) {
+    return 1;
+}
+
+extern "C" const mp_obj_module_t ei_yolo_user_cmodule = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&ei_yolo_module_globals,
 };
